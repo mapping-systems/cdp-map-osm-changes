@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>A super cool website</title>
+    <title>OSM Changes 250720</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://unpkg.com/maplibre-gl@^5.6.1/dist/maplibre-gl.js"></script>
@@ -24,6 +24,8 @@
   </head>
   <body>
     <div id="map" style="height: 100vh"></div>
+    <div id="location-indicator" style="position:absolute; bottom: 10px; left: 10px; background: white; padding: 5px; border-radius: 3px;">
+      
     <script>
       var map = new maplibregl.Map({
         container: "map", // container id
@@ -55,9 +57,19 @@
         });
 
         map.on("click", "point-edits-layer", (e) => {
-          const coordinates = e.features[0].geometry.coordinates.slice();
-          const description = e.features[0].properties.tags;
-          const user = e.features[0].properties.user;
+          const bbox = [
+            [e.point.x - 5, e.point.y - 5],
+            [e.point.x + 5, e.point.y + 5],
+          ];
+          // Find features intersecting the bounding box.
+          const selectedFeatures = map.queryRenderedFeatures(bbox, {
+            layers: ["point-edits-layer"],
+          });
+          if (selectedFeatures.length === 0) {
+            return;
+          }
+          const description = selectedFeatures[0].properties.tags;
+          const user = selectedFeatures[0].properties.user;
 
           const descriptionString =
             `${user} - <br></br>` +
@@ -66,7 +78,7 @@
               .join("<br></br>");
 
           new maplibregl.Popup()
-            .setLngLat(coordinates)
+            .setLngLat(e.lngLat)
             .setHTML(descriptionString)
             .addTo(map);
         });
@@ -78,6 +90,16 @@
         map.on("mouseleave", "point-edits-layer", () => {
           map.getCanvas().style.cursor = "";
         });
+
+        map.on("move", () => {
+          const center = map.getCenter();
+          const zoom = map.getZoom();
+          document.getElementById("location-indicator").innerHTML =
+            `Center: ${center.lng.toFixed(5)}, ${center.lat.toFixed(5)}<br>` +
+            `Zoom: ${zoom.toFixed(2)}`;
+        });
+        map.fire("move"); // Trigger initial update
+
       });
     </script>
   </body>
