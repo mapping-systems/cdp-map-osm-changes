@@ -61,6 +61,7 @@
             [e.point.x - 5, e.point.y - 5],
             [e.point.x + 5, e.point.y + 5],
           ];
+          
           // Find features intersecting the bounding box.
           const selectedFeatures = map.queryRenderedFeatures(bbox, {
             layers: ["point-edits-layer"],
@@ -68,11 +69,14 @@
           if (selectedFeatures.length === 0) {
             return;
           }
+          
           const description = selectedFeatures[0].properties.tags;
           const user = selectedFeatures[0].properties.user;
+          const changeset = selectedFeatures[0].properties.changeset;
 
           const descriptionString =
             `${user} - <br></br>` +
+            `<a href="https://osmcha.org/changesets/${changeset}" target="_blank">${changeset}</a> - <br></br>` +
             Object.entries(JSON.parse(description))
               .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
               .join("<br></br>");
